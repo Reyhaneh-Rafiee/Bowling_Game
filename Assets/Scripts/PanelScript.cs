@@ -1,21 +1,10 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class PanelScript : MonoBehaviour
+public class PanelScrip : MonoBehaviour
 {
-    
-    void Start()
+    public void LoadGameScene()
     {
-        
-    }
-
-   
-    void Update()
-    {
-      if(Input.GetMouseButtonUp(0))
-          SceneManager.LoadScene("GameScene");
-
+        SceneManager.LoadScene("GameScene");
     }
 }

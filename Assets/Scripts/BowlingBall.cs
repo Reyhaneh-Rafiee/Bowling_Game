@@ -10,6 +10,7 @@ public class BowlingBallController : MonoBehaviour
     private bool isShot = false;
     private Rigidbody rb;
     private AudioSource audioSource;
+    private bool audioPlayed = false;
     public Camera followCamera; // دوربین دنبال‌کننده
     public Camera mainCamera; // دوربین اصلی
 
@@ -38,7 +39,6 @@ public class BowlingBallController : MonoBehaviour
 
             // محدود کردن حرکت به چپ و راست
             newPosition.x = Mathf.Clamp(newPosition.x, maxLeft, maxRight);
-
             transform.position = newPosition;
 
             if (Input.GetKeyDown(KeyCode.Space))
@@ -50,7 +50,7 @@ public class BowlingBallController : MonoBehaviour
         else
         {
             // کاهش شتاب در طول زمان
-           // rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, rb.velocity.z * decelerationRate);
+            // rb.velocity = new Vector3(rb.velocity.x, rb.velocity.y, rb.velocity.z * decelerationRate);
         }
     }
 
@@ -67,9 +67,10 @@ public class BowlingBallController : MonoBehaviour
             }
 
             // پخش صدا هنگام برخورد
-            if (audioSource != null && !audioSource.isPlaying)
+            if (audioSource != null && !audioPlayed)
             {
                 audioSource.Play();
+                audioPlayed = true;
             }
 
             // تغییر دوربین به مین‌کَمرا
