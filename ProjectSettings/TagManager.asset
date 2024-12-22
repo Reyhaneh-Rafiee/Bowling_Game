@@ -9,6 +9,7 @@ TagManager:
   - FollowCamera
   - Ground
   - Quad
+  - RestartButton
   layers:
   - Default
   - TransparentFX

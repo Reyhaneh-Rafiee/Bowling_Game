@@ -22,7 +22,7 @@ public class BowlingBallController : MonoBehaviour
         // بررسی اتصالات دوربین‌ها
         if (followCamera == null || mainCamera == null)
         {
-            Debug.LogError("دوربین‌ها به درستی به اسکریپت متصل نشده‌اند!");
+            Debug.LogError("Error,Fixed the camera");
             return;
         }
 
@@ -46,6 +46,7 @@ public class BowlingBallController : MonoBehaviour
                 isShot = true;
                 rb.AddForce(Vector3.forward * initialShotPower);
             }
+           
         }
         else
         {
@@ -64,7 +65,7 @@ public class BowlingBallController : MonoBehaviour
                 // اعمال نیروی برخورد به شیء دیگر
                 Vector3 impactForce = rb.velocity * rb.mass;
                 otherRb.AddForce(impactForce, ForceMode.Impulse);
-            }
+            
 
             // پخش صدا هنگام برخورد
             if (audioSource != null && !audioPlayed)
@@ -72,10 +73,11 @@ public class BowlingBallController : MonoBehaviour
                 audioSource.Play();
                 audioPlayed = true;
             }
-
+            }
             // تغییر دوربین به مین‌کَمرا
             followCamera.enabled = false;
             mainCamera.enabled = true;
+            
         }
     }
 }
