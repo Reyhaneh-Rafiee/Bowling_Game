@@ -8,6 +8,8 @@ public class PinCounter : MonoBehaviour
 {
     private int fallenPins = 0;
     private static int totalFallenPins = 0;
+    private int currentThrows = 0; // متغیر برای پیگیری تعداد پرتاب‌های جاری
+
     public string quadTag = "Quad"; // تگ زمین یا ظرف (Quad)
     public string pinTag = "Pin"; // تگ پین‌ها
     public string ballTag = "Ball"; // تگ توپ برای جلوگیری از شمارش برخورد
@@ -50,22 +52,6 @@ public class PinCounter : MonoBehaviour
             {
                 audioSource.Play();
             }
-
-            // بررسی تعداد پین‌های افتاده
-            if (fallenPins > 4)
-            {
-                // نمایش پنل مرحله بعدی 
-                nextLevelPanel.SetActive(true);
-                // نمایش پنل ری‌استارت 
-                restartPanel.SetActive(false);
-            }
-            else
-            {
-                // نمایش پنل مرحله بعدی 
-                nextLevelPanel.SetActive(false);
-                // نمایش پنل ری‌استارت 
-                restartPanel.SetActive(true);
-            }
         }
     }
 
@@ -78,35 +64,54 @@ public class PinCounter : MonoBehaviour
             {
                 restartPanel.SetActive(true);
             }
+            else
+            {
+                restartPanel.SetActive(false);
+            }
+
+            // پس از خروج توپ، شمارش پرتاب‌ها افزایش می‌یابد
+            currentThrows++;
+            if (currentThrows ==2)
+            {
+                // اگر دو پرتاب انجام شده باشد، پنل مرحله بعدی نمایش داده می‌شود
+                totalFallenPins += fallenPins; // به‌روزرسانی امتیاز کل
+                nextLevelPanel.SetActive(true);
+                restartPanel.SetActive(false);
+                UpdatePinCountText(); // به‌روزرسانی متن امتیاز
+                RestartGame();
+                
+            }
+           else
+          {
+                totalFallenPins += fallenPins;
+                RestartGame(); 
+          }
         }
     }
 
     void UpdatePinCountText()
     {
-        pinCountText.text = "Pins fallen : " + fallenPins + " / " + totalPins;
+        pinCountText.text = "Pins fallen: " + fallenPins + " / " + totalPins;
         totalPinCountText.text = "Total Pins fallen: " + totalFallenPins;
     }
 
     void RestartGame()
     {
-        // ریست کردن تعداد پین‌های افتاده بدون از دست دادن امتیاز کل
+        // ریست کردن شمارش پرتاب‌ها و تعداد پین‌های افتاده بدون از دست دادن امتیاز کل
         fallenPins = 0;
         countedPins.Clear();
+        //currentThrows = 0; // ریست شماره پرتاب‌ها
         UpdatePinCountText();
         restartPanel.SetActive(false);
         nextLevelPanel.SetActive(false);
+        
         // بارگذاری مجدد صحنه فعلی
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void GoToNextLevel()
     {
-        // ذخیره‌سازی تعداد پین‌های افتاده و نمایش در TextMeshPro
-        totalFallenPins += fallenPins;
-        Debug.Log("Total Pins fallen: " + totalFallenPins);
-        UpdatePinCountText();
-        // بازنشانی تعداد پین‌های افتاده برای مرحله بعدی
-        fallenPins = 0;
-        SceneManager.LoadScene("GameScene1");
+        // بارگذاری سطح بعدی
+        SceneManager.LoadScene("GameScene1"); // نام صحنه را بر اساس نیاز خود تغییر دهید
     }
 }
