@@ -11,6 +11,8 @@ TagManager:
   - Quad
   - RestartButton
   - NextLevelButton
+  - RestartPanel
+  - NextLevelPanel
   layers:
   - Default
   - TransparentFX

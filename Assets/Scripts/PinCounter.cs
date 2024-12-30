@@ -10,12 +10,12 @@ public class PinCounter : MonoBehaviour
     private static int totalFallenPins = 0;
     private int currentThrows = 0; // متغیر برای پیگیری تعداد پرتاب‌های جاری
 
-    public string quadTag = "Quad"; // تگ زمین یا ظرف (Quad)
     public string pinTag = "Pin"; // تگ پین‌ها
-    public string ballTag = "Ball"; // تگ توپ برای جلوگیری از شمارش برخورد
+    public string ballTag = "Ball"; // تگ توپ
     public TMP_Text pinCountText; // متن UI برای نمایش تعداد پین‌ها
     public TMP_Text totalPinCountText; // متن UI برای نمایش تعداد کل پین‌ها
     public int totalPins = 10; // کل تعداد پین‌ها
+
     public GameObject restartPanel; // پنل ری‌استارت
     public GameObject nextLevelPanel; // پنل مرحله بعدی
     public Button restartButton; // دکمه ری‌استارت
@@ -44,7 +44,6 @@ public class PinCounter : MonoBehaviour
         {
             fallenPins++;
             countedPins.Add(other);
-            Debug.Log("Pins fallen: " + fallenPins);
             UpdatePinCountText();
 
             // پخش صدا هنگام اولین برخورد
@@ -59,33 +58,39 @@ public class PinCounter : MonoBehaviour
     {
         if (other.CompareTag(ballTag))
         {
-            // اگر توپ به هیچ پینی برخورد نکرد، پنل ری‌استارت نمایش داده شود
+            currentThrows++;
+            totalFallenPins += fallenPins;
+            UpdatePinCountText();
+            ResetFallenPins(); 
+
+           
+
+       
+
+            // پرتاب دوم: بررسی امتیاز کل
+            if (currentThrows == 2)
+            {
+ // اگر هیچ پینی سقوط نکرده باشد
             if (fallenPins == 0)
             {
-                restartPanel.SetActive(true);
+                
+                ShowRestartPanel();
+                
+            }
+                else if (totalFallenPins >= 10)
+                {
+                    ShowNextLevelPanel();
+                }
+                else
+                {
+                    ShowRestartPanel();
+                }
+                Time.timeScale = 0; // متوقف کردن بازی
             }
             else
             {
-                restartPanel.SetActive(false);
+                // بازی ادامه می‌یابد و منتظر پرتاب دوم می‌ماند
             }
-
-            // پس از خروج توپ، شمارش پرتاب‌ها افزایش می‌یابد
-            currentThrows++;
-            if (currentThrows ==2)
-            {
-                // اگر دو پرتاب انجام شده باشد، پنل مرحله بعدی نمایش داده می‌شود
-                totalFallenPins += fallenPins; // به‌روزرسانی امتیاز کل
-                nextLevelPanel.SetActive(true);
-                restartPanel.SetActive(false);
-                UpdatePinCountText(); // به‌روزرسانی متن امتیاز
-                RestartGame();
-                
-            }
-           else
-          {
-                totalFallenPins += fallenPins;
-                RestartGame(); 
-          }
         }
     }
 
@@ -95,23 +100,36 @@ public class PinCounter : MonoBehaviour
         totalPinCountText.text = "Total Pins fallen: " + totalFallenPins;
     }
 
+    void ShowRestartPanel()
+    {
+        restartPanel.SetActive(true);
+        nextLevelPanel.SetActive(false);
+        currentThrows = 0; // ریست شمارش پرتاب‌ها
+    }
+
+    void ShowNextLevelPanel()
+    {
+        nextLevelPanel.SetActive(true);
+        restartPanel.SetActive(false);
+    }
+
+    void ResetFallenPins()
+    {
+        fallenPins = 0;
+        countedPins.Clear(); // لیست پین‌های شمرده شده را پاک می‌کنیم
+    }
+
     void RestartGame()
     {
-        // ریست کردن شمارش پرتاب‌ها و تعداد پین‌های افتاده بدون از دست دادن امتیاز کل
-        fallenPins = 0;
-        countedPins.Clear();
-        //currentThrows = 0; // ریست شماره پرتاب‌ها
-        UpdatePinCountText();
-        restartPanel.SetActive(false);
-        nextLevelPanel.SetActive(false);
-        
-        // بارگذاری مجدد صحنه فعلی
+        // بازنشانی مقیاس زمان به حالت عادی و بارگذاری مجدد صحنه فعلی
+        Time.timeScale = 1;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void GoToNextLevel()
     {
-        // بارگذاری سطح بعدی
+        // بازنشانی مقیاس زمان به حالت عادی و بارگذاری سطح بعدی
+        Time.timeScale = 1;
         SceneManager.LoadScene("GameScene1"); // نام صحنه را بر اساس نیاز خود تغییر دهید
     }
 }
