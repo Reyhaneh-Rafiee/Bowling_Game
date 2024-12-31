@@ -1840,7 +1840,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 0
@@ -3092,13 +3092,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1819249776}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.68383265, y: -0.0016201708, z: -0.009801482, w: 0.7295713}
-  m_LocalPosition: {x: -0.02, y: 0.03, z: -0.17}
+  m_LocalRotation: {x: 0.6839446, y: -0.0032538164, z: -0.0021785826, w: 0.7295235}
+  m_LocalPosition: {x: -0.016, y: -0.004, z: 0.109}
   m_LocalScale: {x: 6.7, y: 4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 86.179, y: -13.689, z: -14.353}
+  m_LocalEulerAnglesHint: {x: 86.28, y: -6.84, z: -6.753}
 --- !u!65 &1819249781
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3132,7 +3132,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4bc2f5ef9ff7ae2438e0b8c6c707f768, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  quadTag: Quad
   pinTag: Pin
   ballTag: Ball
   pinCountText: {fileID: 1705408733}
@@ -3142,6 +3141,8 @@ MonoBehaviour:
   nextLevelPanel: {fileID: 360096611}
   restartButton: {fileID: 225553755}
   nextLevelButton: {fileID: 46183398}
+  initialBallPosition: {x: 0, y: 0, z: 0}
+  ball: {fileID: 859107482}
 --- !u!1 &1978447651
 GameObject:
   m_ObjectHideFlags: 0

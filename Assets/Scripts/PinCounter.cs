@@ -36,6 +36,9 @@ public class PinCounter : MonoBehaviour
         // اضافه کردن listener به دکمه‌ها
         restartButton.onClick.AddListener(RestartGame);
         nextLevelButton.onClick.AddListener(GoToNextLevel);
+
+        // بازگرداندن Time.timeScale به ۱
+        Time.timeScale = 1;
     }
 
     void OnTriggerEnter(Collider other)
@@ -58,40 +61,50 @@ public class PinCounter : MonoBehaviour
     {
         if (other.CompareTag(ballTag))
         {
-            currentThrows++;
-            totalFallenPins += fallenPins;
-            UpdatePinCountText();
-            ResetFallenPins(); 
+            totalFallenPins += fallenPins; // به‌روزرسانی امتیاز کل
 
-           
-
-       
-
-            // پرتاب دوم: بررسی امتیاز کل
-            if (currentThrows == 2)
+            if (fallenPins > 0)
             {
- // اگر هیچ پینی سقوط نکرده باشد
-            if (fallenPins == 0)
-            {
-                
-                ShowRestartPanel();
-                
-            }
-                else if (totalFallenPins >= 10)
+                UpdatePinCountText();
+                ResetFallenPins(); // صفر کردن پین‌ها برای پرتاب بعدی
+                currentThrows++;
+
+                // اگر دو پرتاب انجام شده باشد و امتیازات بیشتر از 10 باشد
+                if (currentThrows >= 2)
                 {
-                    ShowNextLevelPanel();
+                    if (totalFallenPins > 10)
+                    {
+                        Time.timeScale = 0; // توقف بازی
+                        ShowNextLevelPanel();
+                    }
+                    else
+                    {
+                        ShowRestartPanel();
+                        totalFallenPins = 0; // ریست کردن امتیازات
+                        currentThrows = 0; // ریست کردن تعداد پرتاب‌ها
+                    }
                 }
                 else
                 {
-                    ShowRestartPanel();
+                    // بازنشانی صحنه برای پرتاب بعدی
+                    SceneManager.sceneLoaded += OnSceneLoaded;
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
                 }
-                Time.timeScale = 0; // متوقف کردن بازی
             }
             else
             {
-                // بازی ادامه می‌یابد و منتظر پرتاب دوم می‌ماند
+                ShowRestartPanel();
+                totalFallenPins = 0; // ریست کردن امتیازات
+                currentThrows = 0; // ریست کردن تعداد پرتاب‌ها
             }
         }
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // بازگرداندن وضعیت بازی برای پرتاب دوم
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        Time.timeScale = 1;
     }
 
     void UpdatePinCountText()
@@ -104,32 +117,33 @@ public class PinCounter : MonoBehaviour
     {
         restartPanel.SetActive(true);
         nextLevelPanel.SetActive(false);
-        currentThrows = 0; // ریست شمارش پرتاب‌ها
+        Time.timeScale = 0;
     }
 
     void ShowNextLevelPanel()
     {
         nextLevelPanel.SetActive(true);
         restartPanel.SetActive(false);
+        Time.timeScale = 0;
     }
 
     void ResetFallenPins()
     {
         fallenPins = 0;
-        countedPins.Clear(); // لیست پین‌های شمرده شده را پاک می‌کنیم
+        countedPins.Clear();
     }
 
     void RestartGame()
     {
-        // بازنشانی مقیاس زمان به حالت عادی و بارگذاری مجدد صحنه فعلی
+        // بازگرداندن Time.timeScale به ۱
         Time.timeScale = 1;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     void GoToNextLevel()
     {
-        // بازنشانی مقیاس زمان به حالت عادی و بارگذاری سطح بعدی
+        // بازگرداندن Time.timeScale به ۱
         Time.timeScale = 1;
-        SceneManager.LoadScene("GameScene1"); // نام صحنه را بر اساس نیاز خود تغییر دهید
+        SceneManager.LoadScene("GameScene1"); // تغییر نام صحنه بر اساس نیاز
     }
 }
