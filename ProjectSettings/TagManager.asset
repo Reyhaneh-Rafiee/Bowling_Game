@@ -13,6 +13,10 @@ TagManager:
   - NextLevelButton
   - RestartPanel
   - NextLevelPanel
+  - LastPanel
+  - PlayAgainButton
+  - ExitButton
+  - gameObject
   layers:
   - Default
   - TransparentFX

@@ -7,8 +7,8 @@ using TMPro;
 public class PinCounter : MonoBehaviour
 {
     private int fallenPins = 0;
-    private static int totalFallenPins = 0;
-    private int currentThrows = 0; // متغیر برای پیگیری تعداد پرتاب‌های جاری
+    private static int totalFallenPins = 0; // مجموع پین‌های افتاده در تمام مراحل
+    private static int currentThrows = 0; // متغیر برای پیگیری تعداد پرتاب‌های جاری
 
     public string pinTag = "Pin"; // تگ پین‌ها
     public string ballTag = "Ball"; // تگ توپ
@@ -24,21 +24,42 @@ public class PinCounter : MonoBehaviour
 
     private HashSet<Collider> countedPins = new HashSet<Collider>(); // لیست برای پیگیری پین‌های شمارش‌شده
 
-    void Start()
+    private bool ballThrown = false; // متغیر برای پیگیری پرتاب توپ
+
+void Start()
+{
+    UpdatePinCountText();
+    audioSource = GetComponent<AudioSource>();
+
+    // پنهان کردن پنل‌ها در شروع بازی
+    restartPanel.SetActive(false);
+    nextLevelPanel.SetActive(false);
+
+    // اضافه کردن listener به دکمه‌ها
+    if (restartButton != null)
     {
-        UpdatePinCountText();
-        audioSource = GetComponent<AudioSource>();
-
-        // پنهان کردن پنل‌ها در شروع بازی
-        restartPanel.SetActive(false);
-        nextLevelPanel.SetActive(false);
-
-        // اضافه کردن listener به دکمه‌ها
         restartButton.onClick.AddListener(RestartGame);
-        nextLevelButton.onClick.AddListener(GoToNextLevel);
+        Debug.Log("Restart Button Listener Added");
+    }
+    if (nextLevelButton != null)
+    {
+        nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+        Debug.Log("Next Level Button Listener Added");
+    }
 
-        // بازگرداندن Time.timeScale به ۱
-        Time.timeScale = 1;
+    // بازگرداندن Time.timeScale به ۱
+    Time.timeScale = 1;
+}
+
+
+
+    void Update()
+    {
+        // بررسی برخورد توپ با پین‌ها
+        if (ballThrown && fallenPins == 0)
+        {
+            ShowRestartPanel();
+        }
     }
 
     void OnTriggerEnter(Collider other)
@@ -55,48 +76,48 @@ public class PinCounter : MonoBehaviour
                 audioSource.Play();
             }
         }
+
+        if (other.CompareTag(ballTag))
+        {
+            ballThrown = true; // تنظیم پرتاب توپ
+        }
     }
 
     void OnTriggerExit(Collider other)
     {
         if (other.CompareTag(ballTag))
         {
-            totalFallenPins += fallenPins; // به‌روزرسانی امتیاز کل
-
             if (fallenPins > 0)
             {
-                UpdatePinCountText();
-                ResetFallenPins(); // صفر کردن پین‌ها برای پرتاب بعدی
-                currentThrows++;
+                totalFallenPins += fallenPins; // به‌روزرسانی امتیاز کل
+                fallenPins = 0; // بازنشانی پین‌های افتاده برای پرتاب بعدی
 
-                // اگر دو پرتاب انجام شده باشد و امتیازات بیشتر از 10 باشد
-                if (currentThrows >= 2)
+                UpdatePinCountText();
+
+                // اگر تعداد پرتاب‌ها کمتر از 2 باشد، صحنه لود شود
+                if (currentThrows < 2)
                 {
-                    if (totalFallenPins > 10)
+                    SceneManager.sceneLoaded += OnSceneLoaded;
+                    if (SceneManager.GetActiveScene() != null)
                     {
-                        Time.timeScale = 0; // توقف بازی
-                        ShowNextLevelPanel();
-                    }
-                    else
-                    {
-                        ShowRestartPanel();
-                        totalFallenPins = 0; // ریست کردن امتیازات
-                        currentThrows = 0; // ریست کردن تعداد پرتاب‌ها
+                        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
                     }
                 }
                 else
                 {
-                    // بازنشانی صحنه برای پرتاب بعدی
-                    SceneManager.sceneLoaded += OnSceneLoaded;
-                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+                    Time.timeScale = 0; // توقف بازی
+                    if (nextLevelPanel != null)
+                    {
+                        ShowNextLevelPanel();
+                    }
                 }
             }
             else
             {
                 ShowRestartPanel();
-                totalFallenPins = 0; // ریست کردن امتیازات
-                currentThrows = 0; // ریست کردن تعداد پرتاب‌ها
             }
+
+            ballThrown = false; // تنظیم پرتاب توپ برای پرتاب بعدی
         }
     }
 
@@ -105,6 +126,10 @@ public class PinCounter : MonoBehaviour
         // بازگرداندن وضعیت بازی برای پرتاب دوم
         SceneManager.sceneLoaded -= OnSceneLoaded;
         Time.timeScale = 1;
+        UpdatePinCountText(); // به روز رسانی متن پین‌ها
+
+        currentThrows++; // افزایش تعداد پرتاب‌ها
+        Debug.Log("Current Throws: " + currentThrows); // اضافه کردن لاگ برای بررسی تعداد پرتاب‌ها
     }
 
     void UpdatePinCountText()
@@ -115,15 +140,29 @@ public class PinCounter : MonoBehaviour
 
     void ShowRestartPanel()
     {
-        restartPanel.SetActive(true);
-        nextLevelPanel.SetActive(false);
+        if (restartPanel != null)
+        {
+            Debug.Log("Showing Restart Panel"); // اضافه کردن لاگ
+            restartPanel.SetActive(true);
+        }
+        if (nextLevelPanel != null)
+        {
+            nextLevelPanel.SetActive(false);
+        }
         Time.timeScale = 0;
     }
 
     void ShowNextLevelPanel()
     {
-        nextLevelPanel.SetActive(true);
-        restartPanel.SetActive(false);
+        if (nextLevelPanel != null)
+        {
+            Debug.Log("Showing Next Level Panel"); // اضافه کردن لاگ
+            nextLevelPanel.SetActive(true);
+        }
+        if (restartPanel != null)
+        {
+            restartPanel.SetActive(false);
+        }
         Time.timeScale = 0;
     }
 
@@ -133,17 +172,33 @@ public class PinCounter : MonoBehaviour
         countedPins.Clear();
     }
 
-    void RestartGame()
-    {
-        // بازگرداندن Time.timeScale به ۱
-        Time.timeScale = 1;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-    }
+void RestartGame()
+{
+    Debug.Log("Restart Game Button Clicked");
+    Time.timeScale = 1;
+    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+}
 
-    void GoToNextLevel()
+void OnNextLevelClicked()
+{
+    Debug.Log("Next Level Button Clicked");
+    Time.timeScale = 1;
+    currentThrows = 0;
+    
+    string currentSceneName = SceneManager.GetActiveScene().name;
+    if (currentSceneName == "GameScene")
     {
-        // بازگرداندن Time.timeScale به ۱
-        Time.timeScale = 1;
-        SceneManager.LoadScene("GameScene1"); // تغییر نام صحنه بر اساس نیاز
+        SceneManager.LoadScene("GameScene1");
     }
+    else if (currentSceneName == "GameScene1")
+    {
+        SceneManager.LoadScene("GameScene2");
+    }
+    else if (currentSceneName == "GameScene2")
+    {
+        Debug.Log("Last level reached");
+    }
+}
+
+
 }
