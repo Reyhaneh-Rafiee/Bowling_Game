@@ -7,55 +7,85 @@ using TMPro;
 public class PinCounter : MonoBehaviour
 {
     private int fallenPins = 0;
-    private static int totalFallenPins = 0; // مجموع پین‌های افتاده در تمام مراحل
-    private static int currentThrows = 0; // متغیر برای پیگیری تعداد پرتاب‌های جاری
+    private static int totalFallenPins = 0;
+    private static int currentThrows = 0;
 
-    public string pinTag = "Pin"; // تگ پین‌ها
-    public string ballTag = "Ball"; // تگ توپ
-    public TMP_Text pinCountText; // متن UI برای نمایش تعداد پین‌ها
-    public TMP_Text totalPinCountText; // متن UI برای نمایش تعداد کل پین‌ها
-    public int totalPins = 10; // کل تعداد پین‌ها
+    public string pinTag = "Pin";
+    public string ballTag = "Ball";
+    public TMP_Text pinCountText;
+    public TMP_Text totalPinCountText;
+    public TMP_Text bestScoreText;
+    public int totalPins = 10;
 
-    public GameObject restartPanel; // پنل ری‌استارت
-    public GameObject nextLevelPanel; // پنل مرحله بعدی
-    public Button restartButton; // دکمه ری‌استارت
-    public Button nextLevelButton; // دکمه مرحله بعدی
-    private AudioSource audioSource; // منبع صدا
+    public GameObject restartPanel;
+    public GameObject nextLevelPanel;
+    public GameObject lastPanel;
+    public Button restartButton;
+    public Button playAgainButton;
+    public Button nextLevelButton;
+    public Button exitButton;
+    private AudioSource audioSource;
 
-    private HashSet<Collider> countedPins = new HashSet<Collider>(); // لیست برای پیگیری پین‌های شمارش‌شده
+    private HashSet<Collider> countedPins = new HashSet<Collider>();
 
-    private bool ballThrown = false; // متغیر برای پیگیری پرتاب توپ
+    private bool ballThrown = false;
 
-void Start()
-{
-    UpdatePinCountText();
-    audioSource = GetComponent<AudioSource>();
-
-    // پنهان کردن پنل‌ها در شروع بازی
-    restartPanel.SetActive(false);
-    nextLevelPanel.SetActive(false);
-
-    // اضافه کردن listener به دکمه‌ها
-    if (restartButton != null)
+    void Start()
     {
-        restartButton.onClick.AddListener(RestartGame);
-        Debug.Log("Restart Button Listener Added");
+        UpdatePinCountText();
+        audioSource = GetComponent<AudioSource>();
+
+        restartPanel.SetActive(false);
+        nextLevelPanel.SetActive(false);
+        lastPanel.SetActive(false);
+
+        if (restartButton != null)
+        {
+            restartButton.onClick.AddListener(RestartGame);
+            Debug.Log("Restart Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Restart Button is NULL!");
+        }
+
+        if (playAgainButton != null)
+        {
+            playAgainButton.onClick.AddListener(PlayAgain);
+            Debug.Log("Play Again Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Play Again Button is NULL!");
+        }
+
+        if (nextLevelButton != null)
+        {
+            nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+            Debug.Log("Next Level Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Next Level Button is NULL!");
+        }
+
+        if (exitButton != null)
+        {
+            exitButton.onClick.AddListener(ExitGame);
+            Debug.Log("Exit Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Exit Button is NULL!");
+        }
+
+        EnableButtons();
+
+        Time.timeScale = 1;
     }
-    if (nextLevelButton != null)
-    {
-        nextLevelButton.onClick.AddListener(OnNextLevelClicked);
-        Debug.Log("Next Level Button Listener Added");
-    }
-
-    // بازگرداندن Time.timeScale به ۱
-    Time.timeScale = 1;
-}
-
-
 
     void Update()
     {
-        // بررسی برخورد توپ با پین‌ها
         if (ballThrown && fallenPins == 0)
         {
             ShowRestartPanel();
@@ -70,7 +100,6 @@ void Start()
             countedPins.Add(other);
             UpdatePinCountText();
 
-            // پخش صدا هنگام اولین برخورد
             if (audioSource != null)
             {
                 audioSource.Play();
@@ -79,7 +108,7 @@ void Start()
 
         if (other.CompareTag(ballTag))
         {
-            ballThrown = true; // تنظیم پرتاب توپ
+            ballThrown = true;
         }
     }
 
@@ -89,24 +118,25 @@ void Start()
         {
             if (fallenPins > 0)
             {
-                totalFallenPins += fallenPins; // به‌روزرسانی امتیاز کل
-                fallenPins = 0; // بازنشانی پین‌های افتاده برای پرتاب بعدی
-
+                totalFallenPins += fallenPins;
+                fallenPins = 0;
+                countedPins.Clear();
                 UpdatePinCountText();
 
-                // اگر تعداد پرتاب‌ها کمتر از 2 باشد، صحنه لود شود
                 if (currentThrows < 2)
                 {
                     SceneManager.sceneLoaded += OnSceneLoaded;
-                    if (SceneManager.GetActiveScene() != null)
-                    {
-                        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-                    }
+                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
                 }
                 else
                 {
-                    Time.timeScale = 0; // توقف بازی
-                    if (nextLevelPanel != null)
+                    Time.timeScale = 1; // Ensure timeScale is 1 before showing panel
+                    string currentSceneName = SceneManager.GetActiveScene().name;
+                    if (currentSceneName == "GameScene2")
+                    {
+                        ShowLastPanel();
+                    }
+                    else
                     {
                         ShowNextLevelPanel();
                     }
@@ -117,19 +147,19 @@ void Start()
                 ShowRestartPanel();
             }
 
-            ballThrown = false; // تنظیم پرتاب توپ برای پرتاب بعدی
+            ballThrown = false;
         }
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // بازگرداندن وضعیت بازی برای پرتاب دوم
         SceneManager.sceneLoaded -= OnSceneLoaded;
         Time.timeScale = 1;
-        UpdatePinCountText(); // به روز رسانی متن پین‌ها
+        EnableButtons();
+        UpdatePinCountText();
 
-        currentThrows++; // افزایش تعداد پرتاب‌ها
-        Debug.Log("Current Throws: " + currentThrows); // اضافه کردن لاگ برای بررسی تعداد پرتاب‌ها
+        currentThrows++;
+        Debug.Log("Current Throws: " + currentThrows);
     }
 
     void UpdatePinCountText()
@@ -142,13 +172,11 @@ void Start()
     {
         if (restartPanel != null)
         {
-            Debug.Log("Showing Restart Panel"); // اضافه کردن لاگ
+            Debug.Log("Showing Restart Panel");
             restartPanel.SetActive(true);
         }
-        if (nextLevelPanel != null)
-        {
-            nextLevelPanel.SetActive(false);
-        }
+        nextLevelPanel.SetActive(false);
+        lastPanel.SetActive(false);
         Time.timeScale = 0;
     }
 
@@ -156,13 +184,24 @@ void Start()
     {
         if (nextLevelPanel != null)
         {
-            Debug.Log("Showing Next Level Panel"); // اضافه کردن لاگ
+            Debug.Log("Showing Next Level Panel");
             nextLevelPanel.SetActive(true);
         }
-        if (restartPanel != null)
+        restartPanel.SetActive(false);
+        lastPanel.SetActive(false);
+        Time.timeScale = 0;
+    }
+
+    void ShowLastPanel()
+    {
+        if (lastPanel != null)
         {
-            restartPanel.SetActive(false);
+            Debug.Log("Showing Last Panel");
+            lastPanel.SetActive(true);
         }
+        restartPanel.SetActive(false);
+        nextLevelPanel.SetActive(false);
+        bestScoreText.text = "Best Score: " + totalFallenPins;
         Time.timeScale = 0;
     }
 
@@ -172,33 +211,66 @@ void Start()
         countedPins.Clear();
     }
 
-void RestartGame()
-{
-    Debug.Log("Restart Game Button Clicked");
-    Time.timeScale = 1;
-    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-}
-
-void OnNextLevelClicked()
-{
-    Debug.Log("Next Level Button Clicked");
-    Time.timeScale = 1;
-    currentThrows = 0;
-    
-    string currentSceneName = SceneManager.GetActiveScene().name;
-    if (currentSceneName == "GameScene")
+    void EnableButtons()
     {
-        SceneManager.LoadScene("GameScene1");
-    }
-    else if (currentSceneName == "GameScene1")
-    {
-        SceneManager.LoadScene("GameScene2");
-    }
-    else if (currentSceneName == "GameScene2")
-    {
-        Debug.Log("Last level reached");
-    }
-}
+        if (restartButton != null)
+            restartButton.interactable = true;
 
+        if (playAgainButton != null)
+            playAgainButton.interactable = true;
 
+        if (nextLevelButton != null)
+            nextLevelButton.interactable = true;
+
+        if (exitButton != null)
+            exitButton.interactable = true;
+    }
+
+    void RestartGame()
+    {
+        Debug.Log("Restart Game Button Clicked");
+        Time.timeScale = 1;
+        currentThrows = 0;
+        totalFallenPins = 0;
+        // Reload the current scene
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    void PlayAgain()
+    {
+        Debug.Log("Play Again Button Clicked");
+        Time.timeScale = 1;
+        currentThrows = 0;
+        totalFallenPins = 0;
+        SceneManager.LoadScene("GameScene");
+    }
+
+    void OnNextLevelClicked()
+    {
+        Debug.Log("Next Level Button Clicked");
+        Time.timeScale = 1;
+        currentThrows = 0;
+
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        Debug.Log("Current Scene: " + currentSceneName);
+
+        if (currentSceneName == "GameScene")
+        {
+            SceneManager.LoadScene("GameScene1");
+        }
+        else if (currentSceneName == "GameScene1")
+        {
+            SceneManager.LoadScene("GameScene2");
+        }
+        else if (currentSceneName == "GameScene2")
+        {
+            Debug.Log("Last level reached");
+        }
+    }
+
+    void ExitGame()
+    {
+        Debug.Log("Exit Game Button Clicked");
+        Application.Quit();
+    }
 }
