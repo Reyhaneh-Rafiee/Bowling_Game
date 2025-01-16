@@ -24,63 +24,35 @@ public class PinCounter : MonoBehaviour
     public Button playAgainButton;
     public Button nextLevelButton;
     public Button exitButton;
-    private AudioSource audioSource;
+    private static AudioSource audioSource;
+    private static bool musicPlaying = false;
 
     private HashSet<Collider> countedPins = new HashSet<Collider>();
-
     private bool ballThrown = false;
+
+    public AudioClip scene1Music;
+    public AudioClip scene2Music;
+    public AudioClip scene3Music;
+
+    void Awake()
+    {
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            DontDestroyOnLoad(audioSource);
+        }
+    }
 
     void Start()
     {
         UpdatePinCountText();
-        audioSource = GetComponent<AudioSource>();
-
         restartPanel.SetActive(false);
         nextLevelPanel.SetActive(false);
         lastPanel.SetActive(false);
 
-        if (restartButton != null)
-        {
-            restartButton.onClick.AddListener(RestartGame);
-            Debug.Log("Restart Button Listener Added");
-        }
-        else
-        {
-            Debug.LogError("Restart Button is NULL!");
-        }
-
-        if (playAgainButton != null)
-        {
-            playAgainButton.onClick.AddListener(PlayAgain);
-            Debug.Log("Play Again Button Listener Added");
-        }
-        else
-        {
-            Debug.LogError("Play Again Button is NULL!");
-        }
-
-        if (nextLevelButton != null)
-        {
-            nextLevelButton.onClick.AddListener(OnNextLevelClicked);
-            Debug.Log("Next Level Button Listener Added");
-        }
-        else
-        {
-            Debug.LogError("Next Level Button is NULL!");
-        }
-
-        if (exitButton != null)
-        {
-            exitButton.onClick.AddListener(ExitGame);
-            Debug.Log("Exit Button Listener Added");
-        }
-        else
-        {
-            Debug.LogError("Exit Button is NULL!");
-        }
-
+        PlaySceneMusic();
+        AddButtonListeners();
         EnableButtons();
-
         Time.timeScale = 1;
     }
 
@@ -99,11 +71,6 @@ public class PinCounter : MonoBehaviour
             fallenPins++;
             countedPins.Add(other);
             UpdatePinCountText();
-
-            if (audioSource != null)
-            {
-                audioSource.Play();
-            }
         }
 
         if (other.CompareTag(ballTag))
@@ -130,7 +97,7 @@ public class PinCounter : MonoBehaviour
                 }
                 else
                 {
-                    Time.timeScale = 1; // Ensure timeScale is 1 before showing panel
+                    Time.timeScale = 1;
                     string currentSceneName = SceneManager.GetActiveScene().name;
                     if (currentSceneName == "GameScene2")
                     {
@@ -232,7 +199,6 @@ public class PinCounter : MonoBehaviour
         Time.timeScale = 1;
         currentThrows = 0;
         totalFallenPins = 0;
-        // Reload the current scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -250,6 +216,7 @@ public class PinCounter : MonoBehaviour
         Debug.Log("Next Level Button Clicked");
         Time.timeScale = 1;
         currentThrows = 0;
+        StopCurrentMusic();
 
         string currentSceneName = SceneManager.GetActiveScene().name;
         Debug.Log("Current Scene: " + currentSceneName);
@@ -272,5 +239,83 @@ public class PinCounter : MonoBehaviour
     {
         Debug.Log("Exit Game Button Clicked");
         Application.Quit();
+    }
+
+    void PlaySceneMusic()
+    {
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        AudioClip clipToPlay = null;
+
+        switch (currentSceneName)
+        {
+            case "GameScene":
+                clipToPlay = scene1Music;
+                break;
+            case "GameScene1":
+                clipToPlay = scene2Music;
+                break;
+            case "GameScene2":
+                clipToPlay = scene3Music;
+                break;
+        }
+
+        if (clipToPlay != null && (!audioSource.isPlaying || audioSource.clip != clipToPlay))
+        {
+            audioSource.clip = clipToPlay;
+            audioSource.Play();
+            musicPlaying = true;
+        }
+    }
+
+    void StopCurrentMusic()
+    {
+        if (audioSource.isPlaying)
+        {
+            audioSource.Stop();
+            musicPlaying = false;
+        }
+    }
+
+    void AddButtonListeners()
+    {
+        if (restartButton != null)
+        {
+            restartButton.onClick.AddListener(RestartGame);
+            Debug.Log("Restart Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Restart Button is NULL!");
+        }
+
+        if (playAgainButton != null)
+        {
+            playAgainButton.onClick.AddListener(PlayAgain);
+            Debug.Log("Play Again Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Play Again Button is NULL!");
+        }
+
+        if (nextLevelButton != null)
+        {
+            nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+            Debug.Log("Next Level Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Next Level Button is NULL!");
+        }
+
+        if (exitButton != null)
+        {
+            exitButton.onClick.AddListener(ExitGame);
+            Debug.Log("Exit Button Listener Added");
+        }
+        else
+        {
+            Debug.LogError("Exit Button is NULL!");
+        }
     }
 }
