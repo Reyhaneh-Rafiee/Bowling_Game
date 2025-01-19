@@ -9,6 +9,9 @@ public class PinCounter : MonoBehaviour
     private int fallenPins = 0;
     private static int totalFallenPins = 0;
     private static int currentThrows = 0;
+    private bool ballThrown = false;
+    private static int stageFallenPins = 0;
+    private static bool nextLevelClicked = false;
 
     public string pinTag = "Pin";
     public string ballTag = "Ball";
@@ -28,7 +31,6 @@ public class PinCounter : MonoBehaviour
     private static bool musicPlaying = false;
 
     private HashSet<Collider> countedPins = new HashSet<Collider>();
-    private bool ballThrown = false;
 
     public AudioClip scene1Music;
     public AudioClip scene2Music;
@@ -46,10 +48,7 @@ public class PinCounter : MonoBehaviour
     void Start()
     {
         UpdatePinCountText();
-        restartPanel.SetActive(false);
-        nextLevelPanel.SetActive(false);
-        lastPanel.SetActive(false);
-
+        SetPanelVisibility(false, false, false);
         PlaySceneMusic();
         AddButtonListeners();
         EnableButtons();
@@ -72,7 +71,6 @@ public class PinCounter : MonoBehaviour
             countedPins.Add(other);
             UpdatePinCountText();
         }
-
         if (other.CompareTag(ballTag))
         {
             ballThrown = true;
@@ -85,35 +83,31 @@ public class PinCounter : MonoBehaviour
         {
             if (fallenPins > 0)
             {
-                totalFallenPins += fallenPins;
+                stageFallenPins += fallenPins;
+                totalFallenPins += fallenPins;  // اضافه کردن امتیازات به مجموع
                 fallenPins = 0;
                 countedPins.Clear();
                 UpdatePinCountText();
-
-                if (currentThrows < 2)
-                {
-                    SceneManager.sceneLoaded += OnSceneLoaded;
-                    SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-                }
-                else
-                {
-                    Time.timeScale = 1;
-                    string currentSceneName = SceneManager.GetActiveScene().name;
-                    if (currentSceneName == "GameScene2")
-                    {
-                        ShowLastPanel();
-                    }
-                    else
-                    {
-                        ShowNextLevelPanel();
-                    }
-                }
+            }
+            currentThrows++;
+            if (currentThrows < 2)
+            {
+                SceneManager.sceneLoaded += OnSceneLoaded;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
             }
             else
             {
-                ShowRestartPanel();
+                string currentSceneName = SceneManager.GetActiveScene().name;
+                if (currentSceneName == "GameScene2")
+                {
+                    ShowLastPanel();
+                }
+                else
+                {
+                    ShowNextLevelPanel();
+                }
+                nextLevelClicked = true;
             }
-
             ballThrown = false;
         }
     }
@@ -124,26 +118,26 @@ public class PinCounter : MonoBehaviour
         Time.timeScale = 1;
         EnableButtons();
         UpdatePinCountText();
-
-        currentThrows++;
+        ResetFallenPins();
         Debug.Log("Current Throws: " + currentThrows);
     }
 
     void UpdatePinCountText()
     {
-        pinCountText.text = "Pins fallen: " + fallenPins + " / " + totalPins;
-        totalPinCountText.text = "Total Pins fallen: " + totalFallenPins;
+        if (pinCountText != null)
+            pinCountText.text = "Pins fallen: " + fallenPins + " / " + totalPins;
+
+        if (totalPinCountText != null)
+            totalPinCountText.text = "Total Pins fallen: " + totalFallenPins;
     }
 
     void ShowRestartPanel()
     {
         if (restartPanel != null)
         {
-            Debug.Log("Showing Restart Panel");
             restartPanel.SetActive(true);
         }
-        nextLevelPanel.SetActive(false);
-        lastPanel.SetActive(false);
+        SetPanelVisibility(restartPanel != null, false, false);
         Time.timeScale = 0;
     }
 
@@ -151,11 +145,10 @@ public class PinCounter : MonoBehaviour
     {
         if (nextLevelPanel != null)
         {
-            Debug.Log("Showing Next Level Panel");
             nextLevelPanel.SetActive(true);
+            UpdatePinCountText();
         }
-        restartPanel.SetActive(false);
-        lastPanel.SetActive(false);
+        SetPanelVisibility(false, nextLevelPanel != null, false);
         Time.timeScale = 0;
     }
 
@@ -163,13 +156,24 @@ public class PinCounter : MonoBehaviour
     {
         if (lastPanel != null)
         {
-            Debug.Log("Showing Last Panel");
             lastPanel.SetActive(true);
+            UpdatePinCountText();
+            bestScoreText.text = "Best Score: " + totalFallenPins;  // نمایش مجموع امتیازات در Best Score
         }
-        restartPanel.SetActive(false);
-        nextLevelPanel.SetActive(false);
-        bestScoreText.text = "Best Score: " + totalFallenPins;
+        SetPanelVisibility(false, false, lastPanel != null);
         Time.timeScale = 0;
+    }
+
+    void SetPanelVisibility(bool showRestart, bool showNextLevel, bool showLast)
+    {
+        if (restartPanel != null)
+            restartPanel.SetActive(showRestart);
+
+        if (nextLevelPanel != null)
+            nextLevelPanel.SetActive(showNextLevel);
+
+        if (lastPanel != null)
+            lastPanel.SetActive(showLast);
     }
 
     void ResetFallenPins()
@@ -196,8 +200,7 @@ public class PinCounter : MonoBehaviour
     void RestartGame()
     {
         Debug.Log("Restart Game Button Clicked");
-        Time.timeScale = 1;
-        currentThrows = 0;
+        ResetGame();
         totalFallenPins = 0;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
@@ -205,8 +208,7 @@ public class PinCounter : MonoBehaviour
     void PlayAgain()
     {
         Debug.Log("Play Again Button Clicked");
-        Time.timeScale = 1;
-        currentThrows = 0;
+        ResetGame();
         totalFallenPins = 0;
         SceneManager.LoadScene("GameScene");
     }
@@ -214,10 +216,11 @@ public class PinCounter : MonoBehaviour
     void OnNextLevelClicked()
     {
         Debug.Log("Next Level Button Clicked");
-        Time.timeScale = 1;
-        currentThrows = 0;
+        nextLevelClicked = false;
+        ResetGame();
         StopCurrentMusic();
-
+        currentThrows = 0;
+        fallenPins = 0;
         string currentSceneName = SceneManager.GetActiveScene().name;
         Debug.Log("Current Scene: " + currentSceneName);
 
@@ -317,5 +320,14 @@ public class PinCounter : MonoBehaviour
         {
             Debug.LogError("Exit Button is NULL!");
         }
+    }
+
+    void ResetGame()
+    {
+        currentThrows = 0;
+        countedPins.Clear();
+        ballThrown = false;
+        fallenPins = 0;
+        stageFallenPins = 0;
     }
 }
